@@ -1,0 +1,48 @@
+{
+  "uid": "wix_contact_sync_webhooks",
+  "type": "webhooks",
+  "config": {
+    "settings": {
+      "targetUrl": "https://<PREVIEW_DOMAIN>.wix-app.run/functions/hubspot-webhook?instanceId=<INSTANCE_ID>",
+      "maxConcurrentRequests": 10
+    },
+    "subscriptions": {
+      "crmObjects": [
+        {
+          "subscriptionType": "object.creation",
+          "objectType": "contact",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "contact",
+          "propertyName": "email",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "contact",
+          "propertyName": "firstname",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "contact",
+          "propertyName": "lastname",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.propertyChange",
+          "objectType": "contact",
+          "propertyName": "phone",
+          "active": true
+        },
+        {
+          "subscriptionType": "object.deletion",
+          "objectType": "contact",
+          "active": true
+        }
+      ]
+    }
+  }
+}
