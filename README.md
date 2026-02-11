@@ -1,7 +1,3 @@
-# wix
-
-npm run build && npm run preview
-
 ## Setup 🔧
 
 ##### Install dependencies:
@@ -18,11 +14,21 @@ In the project directory, you can run:
 npm run dev
 ```
 
-## ADD DOMAIN AND INSTANCE 
-```console
-https://<PREVIEW_DOMAIN>.wix-app.run/functions/hubspot-webhook?instanceId=<INSTANCE_ID>,
+## HubSpot URLs
+
+Replace the placeholders with your own values:
+
+- **PREVIEW_DOMAIN** — your app preview domain (e.g. from `npm run preview` output or Wix Dev Center).
+- **INSTANCE_ID** — the app instance ID for the site installation (from the dashboard URL or Dev Center).
+
+**Webhook:**
+
+```
+https://<PREVIEW_DOMAIN>.wix-app.run/functions/hubspot-webhook?instanceId=<INSTANCE_ID>
 ```
 
-```console
+**OAuth Redirect URI:**
+
+```
 https://<PREVIEW_DOMAIN>.wix-app.run/functions/hubspot-oauth-callback
 ```
