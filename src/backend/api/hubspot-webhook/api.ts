@@ -8,9 +8,7 @@ type HubSpotWebhookEvent = {
   subscriptionId?: number;
   portalId?: number;
   appId?: number;
-  // "classic" payloads
   occurredAt?: number;
-  // generic object.* payloads (docs call it `label`, unix ms)
   label?: number;
   subscriptionType?: string;
   objectId?: number;
@@ -27,7 +25,6 @@ function asEvents(body: unknown): HubSpotWebhookEvent[] {
     if (Array.isArray(anyBody.events)) {
       return anyBody.events as HubSpotWebhookEvent[];
     }
-    // Some senders may post a single event object.
     return [body as HubSpotWebhookEvent];
   }
   return [];
@@ -46,8 +43,6 @@ function firstHeaderValue(v: string | null): string | null {
 }
 
 function forwardedPathAndQuery(req: Request): string | null {
-  // Different proxies expose original path differently. Try the common ones.
-  // We keep it minimal and only accept absolute-path forms.
   const candidates = [
     req.headers.get("X-Forwarded-Uri"),
     req.headers.get("X-Original-URL"),
@@ -57,15 +52,12 @@ function forwardedPathAndQuery(req: Request): string | null {
   for (const c of candidates) {
     const v = firstHeaderValue(c);
     if (!v) continue;
-    // Accept "/path?query" (absolute path form)
     if (v.startsWith("/")) return v;
   }
   return null;
 }
 
 function signatureUriFromRequest(req: Request): string {
-  // HubSpot signature validation requires the *exact* URI (including protocol + host).
-  // Some runtimes may expose an internal URL via `req.url`, so we prefer forwarded headers.
   const u = new URL(req.url);
   const proto =
     firstHeaderValue(req.headers.get("X-Forwarded-Proto")) ||
@@ -93,24 +85,16 @@ export async function POST(req: Request): Promise<Response> {
 
   const run = async () => {
     const rawBody = await req.text();
-
-    // Best-effort parse for diagnostics (no PII expected in webhook payload anyway)
     let parsed: unknown = [];
     try {
       parsed = rawBody ? (JSON.parse(rawBody) as unknown) : [];
     } catch {
-      // HubSpot expects 2xx quickly; do not keep retrying forever on malformed payload.
       return Response.json({ error: "Invalid JSON" }, { status: 400 });
     }
-
     const receivedAtMs = Date.now();
     const events = asEvents(parsed);
 
-    // SECURITY: для упрощения отладки подпись HubSpot сейчас не проверяется.
-    // В продакшене проверку нужно включить обратно.
-
     if (events.length === 0) {
-      // If HubSpot (or a proxy) ever changes the payload shape, log a single diagnostic event.
       try {
         const shape =
           parsed && typeof parsed === "object"
@@ -124,9 +108,7 @@ export async function POST(req: Request): Promise<Response> {
           status: "ignored",
           errorCode: clampReason(`no_events diag=${JSON.stringify(shape)}`),
         });
-      } catch {
-        // ignore
-      }
+      } catch {}
       return Response.json({ ok: true }, { status: 200 });
     }
 
@@ -163,9 +145,7 @@ export async function POST(req: Request): Promise<Response> {
               status: "error",
               errorCode: clampReason(err instanceof Error ? err.message : String(err), 300),
             });
-          } catch {
-            // ignore
-          }
+          } catch {}
           conn = null;
         }
       }
@@ -184,9 +164,7 @@ export async function POST(req: Request): Promise<Response> {
           status: conn ? "received" : "ignored",
           errorCode: conn ? undefined : "unknown_hub_id",
         });
-      } catch {
-        // logEvent is best-effort; never fail the webhook delivery due to observability.
-      }
+      } catch {}
 
       if (conn && objectId) {
         try {
@@ -196,7 +174,6 @@ export async function POST(req: Request): Promise<Response> {
             correlationId,
           });
         } catch {
-          // Don't fail the whole batch; webhook must return 200 quickly.
           console.error("HubSpot webhook processing failed.");
         }
       }
@@ -211,7 +188,6 @@ export async function POST(req: Request): Promise<Response> {
     }
     return await run();
   } catch (err) {
-    // Absolute last resort: never let HubSpot see 500, otherwise it retries noisily.
     console.error("HubSpot webhook handler crashed.", err);
     return Response.json({ ok: true }, { status: 200 });
   }

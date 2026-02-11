@@ -1,6 +1,5 @@
 import { contacts } from "@wix/crm";
 import type { ContactInfo } from "@wix/auto_sdk_crm_contacts";
-import { ensureAppCollectionsExist } from "../storage/ensureCollections";
 import { listMappings } from "../storage/mappings";
 import { getMapByHubspotContactId, upsertContactIdMap } from "../storage/contactIdMap";
 import { recordSync, wasRecentlySynced } from "../storage/syncLedger";
@@ -71,8 +70,6 @@ export async function handleHubSpotContactWebhook(params: {
   hubspotContactId: string;
   correlationId: string;
 }): Promise<void> {
-  await ensureAppCollectionsExist();
-
   const mappings = await listMappings(params.connectionKey);
   const inbound = mappings.filter(
     (m) => m.direction === "hubspot_to_wix" || m.direction === "bidirectional",
@@ -112,7 +109,6 @@ export async function handleHubSpotContactWebhook(params: {
 
   const payloadHash = await sha256HexStableJson(fieldValues);
 
-  // If this webhook is just our own Wix->HubSpot write echo, ignore.
   const deduped = await wasRecentlySynced({
     entityType: "contact",
     source: "wix",
@@ -202,9 +198,7 @@ export async function handleHubSpotContactWebhook(params: {
         status: "error",
         errorCode: code,
       });
-    } catch {
-      // логирование ошибок синка не должно ломать вебхук
-    }
+    } catch {}
     console.error(
       "Failed to sync HubSpot contact to Wix.",
       JSON.stringify(err, null, 2),

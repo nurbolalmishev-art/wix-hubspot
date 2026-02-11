@@ -54,7 +54,6 @@ export async function getHubSpotRedirectUriOrDefault(
   if (override) {
     return override;
   }
-  // Wix CLI backend APIs are served under "/functions/<name>"
   return `${requestOrigin}/functions/hubspot-oauth-callback`;
 }
 

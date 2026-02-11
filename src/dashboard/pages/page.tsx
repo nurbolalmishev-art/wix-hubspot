@@ -49,7 +49,7 @@ type EventRow = {
   objectType: string;
   objectId: string;
   occurredAtMs: number | null;
-  receivedAtMs: number | null;
+  receivedAtMs: number;
   status: string;
   errorCode: string | null;
 };
@@ -165,8 +165,6 @@ const Index: FC = () => {
         dashboard.showToast({ message: "Failed to start OAuth.", type: "error" });
         return;
       }
-      // We intentionally keep `window.opener` enabled so the callback can
-      // communicate back to this dashboard page with postMessage.
       window.open(json.authorizeUrl, "_blank", "popup,width=900,height=700");
     } catch {
       dashboard.showToast({ message: "Failed to start OAuth.", type: "error" });
@@ -196,20 +194,13 @@ const Index: FC = () => {
     );
   }, [status]);
 
-  const endpoints = useMemo(() => {
-    // `BASE_API_URL` is expected to be something like: https://<domain>/functions
-    const webhookUrl = `${baseApiUrl}/hubspot-webhook`;
-    const oauthCallbackUrl = `${baseApiUrl}/hubspot-oauth-callback`;
-    return { webhookUrl, oauthCallbackUrl, baseApiUrl };
-  }, [baseApiUrl]);
-
   const addMappingRow = useCallback(() => {
     setMappings((prev) => [
       ...prev,
       {
         wixFieldKey: "email",
         hubspotPropertyName: "",
-        direction: "bidirectional",
+        direction: "hubspot_to_wix",
         transform: "none",
       },
     ]);
@@ -237,6 +228,13 @@ const Index: FC = () => {
     }
     return false;
   }, [mappings]);
+
+  const endpoints = useMemo(() => {
+    // `BASE_API_URL` is expected to be something like: https://<domain>/functions
+    const webhookUrl = `${baseApiUrl}/hubspot-webhook`;
+    const oauthCallbackUrl = `${baseApiUrl}/hubspot-oauth-callback`;
+    return { webhookUrl, oauthCallbackUrl, baseApiUrl };
+  }, [baseApiUrl]);
 
   const onSaveMappings = useCallback(async () => {
     if (duplicateHubspotProp) {
@@ -281,7 +279,7 @@ const Index: FC = () => {
       <Page>
         <Page.Header
           title="HubSpot Sync"
-          subtitle="Connection, field mapping and observability."
+          subtitle="Connect HubSpot and configure field mapping (HubSpot → Wix)."
           actionsBar={
             <Box gap="12px">
               <Button priority="secondary" onClick={loadAll}>
@@ -313,7 +311,18 @@ const Index: FC = () => {
                   <Text size="tiny" secondary>
                     Scopes: {(status?.scopes ?? []).join(", ") || "—"}
                   </Text>
-
+                  <Divider />
+                  <Box direction="vertical" gap="6px">
+                    <Text size="tiny" secondary>
+                      Endpoints (для настройки в HubSpot):
+                    </Text>
+                    <Text size="tiny" secondary>
+                      Webhook URL: <b>{endpoints.webhookUrl}</b>
+                    </Text>
+                    <Text size="tiny" secondary>
+                      OAuth callback URL: <b>{endpoints.oauthCallbackUrl}</b>
+                    </Text>
+                  </Box>
                 </Box>
               </Card.Content>
             </Card>
@@ -395,9 +404,8 @@ const Index: FC = () => {
                             <Dropdown
                               selectedId={row.direction}
                               options={[
-                                { id: "wix_to_hubspot", value: "Wix → HubSpot" },
                                 { id: "hubspot_to_wix", value: "HubSpot → Wix" },
-                                { id: "bidirectional", value: "Bi-directional" },
+                                { id: "bidirectional", value: "Bidirectional" },
                               ]}
                               onSelect={(opt) =>
                                 updateMappingRow(idx, { direction: opt.id as MappingDirection })

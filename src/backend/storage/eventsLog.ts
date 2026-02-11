@@ -12,8 +12,6 @@ export type EventLogRecord = {
   objectId?: string;
   occurredAtMs?: number;
   receivedAtMs: number;
-  // These fields are useful, but some manually-created schemas may not include them.
-  // We'll best-effort write them when possible.
   status?: "received" | "ignored" | "processed" | "error" | "rejected";
   errorCode?: string;
 };
@@ -64,26 +62,13 @@ export async function logEvent(record: EventLogRecord): Promise<void> {
 
   const attempts: Array<Record<string, unknown>> = [];
 
-  // Attempt 1: full record
   attempts.push(base);
-
-  // Attempt 1b: common manual schema variation (numbers stored as text)
   attempts.push(coerceNumbersToText(base));
-
-  // Attempt 1c: common manual schema variation (timestamps stored as datetime/ISO)
   attempts.push(coerceMsToIso(base));
-
-  // Attempt 2: drop optional fields that are often missing in CMS schemas
   const { status: _status, errorCode: _errorCode, ...withoutStatus } = base;
   attempts.push(withoutStatus);
-
-  // Attempt 2b: drop optional fields + number→text coercion
   attempts.push(coerceNumbersToText(withoutStatus));
-
-  // Attempt 2c: drop optional fields + ms→ISO coercion
   attempts.push(coerceMsToIso(withoutStatus));
-
-  // Attempt 3: minimal fields only (for connectivity debugging)
   attempts.push({
     eventType: base.eventType,
     source: base.source,
@@ -100,8 +85,6 @@ export async function logEvent(record: EventLogRecord): Promise<void> {
       const msg = err instanceof Error ? err.message : String(err);
       const code = wixDataErrorCode(err);
       errors.push(compactMsg(`${code ? `${code}: ` : ""}${msg}`));
-      // Some environments disallow elevated writes from external webhooks.
-      // If the collection permissions allow it, fall back to a non-elevated insert.
       try {
         await items.insert(collectionId(COLLECTIONS.eventsLog), attempt);
         return;
@@ -109,12 +92,10 @@ export async function logEvent(record: EventLogRecord): Promise<void> {
         const msg2 = err2 instanceof Error ? err2.message : String(err2);
         const code2 = wixDataErrorCode(err2);
         errors.push(compactMsg(`fallback ${code2 ? `${code2}: ` : ""}${msg2}`));
-        // try next attempt
       }
     }
   }
 
-  // Observability must never break core flows (webhooks/sync). Log and move on.
   console.error(
     `Failed to write hubspot_events_log after retries. ` +
       `Most likely: missing collection / wrong collection ID / schema mismatch / permissions. ` +

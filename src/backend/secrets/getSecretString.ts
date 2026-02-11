@@ -33,17 +33,13 @@ function extractSecretValue(res: MaybeSecretValueResponse): string | null {
 
 export async function getSecretString(name: string): Promise<string | null> {
   try {
-    // HubSpot redirects to our callback without Wix auth headers.
-    // Reading secrets can require elevated permissions in that context.
     const getSecretValueElevated = auth.elevate(secrets.getSecretValue);
     const res = (await getSecretValueElevated(name)) as MaybeSecretValueResponse;
     return extractSecretValue(res);
   } catch (err) {
     if (isSecretNotFoundError(err)) {
-      // Missing optional secret (for example hubspot_redirect_uri override).
       return null;
     }
-    // Do not leak secret names/values into logs; only generic error.
     console.error("Failed to read secret value.");
     return null;
   }

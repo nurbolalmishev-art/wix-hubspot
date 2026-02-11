@@ -2,11 +2,9 @@ import { exchangeCodeForTokens, getHubSpotRedirectUriOrDefault, HubSpotOAuthErro
 import { verifyAndParseSignedState } from "../../hubspot/state";
 import { getHubSpotStateSigningSecret } from "../../hubspot/stateSigningSecret";
 import { storeHubSpotTokens } from "../../hubspot/tokenStore";
-import { ensureAppCollectionsExist } from "../../storage/ensureCollections";
 import { getConnectionKeyFromAuthHeader } from "../../wix/authConnectionKey";
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000;
-// Bump this tag when deploying to verify you're hitting the latest backend.
 const BUILD_TAG = "2026-02-10T23:58Z-token-fields-and-webhook-sig";
 
 type FinishBody = {
@@ -15,7 +13,6 @@ type FinishBody = {
 };
 
 function scrubSecrets(s: string): string {
-  // Best-effort scrubbing if upstream ever includes token-like fields.
   return s
     .replace(/access_token"\s*:\s*"[^"]+"/gi, 'access_token":"***"')
     .replace(/refresh_token"\s*:\s*"[^"]+"/gi, 'refresh_token":"***"')
@@ -39,7 +36,6 @@ export async function POST(req: Request): Promise<Response> {
     | "token_store" = "init";
   try {
     stage = "init";
-    await ensureAppCollectionsExist();
 
     stage = "auth";
     const connectionKey = getConnectionKeyFromAuthHeader(req.headers.get("Authorization"));
@@ -109,7 +105,6 @@ export async function POST(req: Request): Promise<Response> {
     console.error("OAuth finish failed.");
     const msg = err instanceof Error ? err.message : "";
     if (err instanceof HubSpotOAuthError) {
-      // Safe to surface HubSpot's error text; it shouldn't include tokens.
       return Response.json(
         {
           error: "HubSpot OAuth failed",

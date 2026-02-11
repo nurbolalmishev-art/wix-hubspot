@@ -3,8 +3,6 @@ import { base64EncodeBytes, bytesToHex, hmacSha256, sha256, timingSafeEqualUtf8,
 const MAX_ALLOWED_TIMESTAMP_AGE_MS = 5 * 60 * 1000;
 
 function decodeHubSpotUriForV3(uri: string): string {
-  // HubSpot requires decoding a specific set of URL-encoded characters.
-  // See: https://developers.hubspot.com/docs/api/webhooks/validating-requests
   const replacements: Array<[RegExp, string]> = [
     [/%3A/gi, ":"],
     [/%2F/gi, "/"],
@@ -47,12 +45,10 @@ export function verifyHubSpotWebhookV3(params: {
   }
 
   const uri = decodeHubSpotUriForV3(params.url);
-  // IMPORTANT: Timestamp must match the header value exactly (no whitespace differences).
   const baseString = `${params.method}${uri}${params.rawBody}${tsRaw}`;
 
   return hmacSha256(params.clientSecret, baseString)
     .then((mac) => {
-      // HubSpot V3 uses base64 (not base64url)
       const computed = base64EncodeBytes(mac);
       if (!timingSafeEqualUtf8(computed, sig)) {
         return { ok: false, reason: "Signature mismatch." } as const;
@@ -72,8 +68,6 @@ export async function verifyHubSpotWebhookV2(params: {
   if (!params.signature) {
     return { ok: false, reason: "Missing signature header." };
   }
-
-  // v2 signature: sha256hex(clientSecret + method + url + body)
   const baseString = `${params.clientSecret}${params.method}${params.url}${params.rawBody}`;
   const dig = await sha256(utf8ToBytes(baseString));
   const computed = bytesToHex(dig);

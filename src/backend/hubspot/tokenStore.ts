@@ -36,8 +36,6 @@ export async function loadHubSpotTokens(connectionKey: string): Promise<{
   if (typeof existing.data.tokenExpiresAtMs !== "number") {
     return null;
   }
-
-  // Prefer new plain-text token fields.
   if (existing.data.accessToken && existing.data.refreshToken) {
     return {
       tokens: {
@@ -49,8 +47,5 @@ export async function loadHubSpotTokens(connectionKey: string): Promise<{
       hubId: existing.data.hubId,
     };
   }
-
-  // Legacy fallback (tokenEnc) is intentionally not supported after migration.
-  // If you still have tokenEnc, reconnect to populate accessToken/refreshToken.
   return null;
 }

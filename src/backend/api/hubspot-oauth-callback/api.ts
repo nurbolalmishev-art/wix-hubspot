@@ -17,8 +17,6 @@ export async function GET(req: Request): Promise<Response> {
     <script>
       (function () {
         try {
-          // We can't rely on Wix auth in this callback request (HubSpot redirects directly).
-          // Send the code/state to the dashboard page, which will finish OAuth using fetchWithAuth().
           window.opener && window.opener.postMessage(
             { type: "hubspot_oauth_callback", code: ${JSON.stringify(code)}, state: ${JSON.stringify(state)} },
             "*"

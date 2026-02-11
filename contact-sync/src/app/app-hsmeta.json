@@ -8,7 +8,7 @@
     "auth": {
       "type": "oauth",
       "redirectUrls": [
-        "https://<PREVIEW_DOMAIN>.wix-app.run/functions/hubspot-oauth-callback"
+        "https://c9afddd8-c2a0-479b-a9fb-8a77a5095c79.wix-app.run/functions/hubspot-oauth-callback"
       ],
       "requiredScopes": [
         "oauth",

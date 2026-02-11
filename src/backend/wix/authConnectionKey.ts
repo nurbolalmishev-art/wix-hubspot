@@ -19,10 +19,6 @@ function tryDecodeJwtPayload(token: string): JwtPayload | null {
   if (parts.length < 2) {
     return null;
   }
-
-  // Wix `httpClient.fetchWithAuth()` may send tokens in a non-standard wrapper format:
-  // "OauthNG.JWS.<header>.<payload>.<sig>"
-  // In that case the JWT payload is at index 3.
   let payloadB64u = parts[1];
   if (parts.length >= 5 && parts[0] === "OauthNG" && parts[1] === "JWS") {
     payloadB64u = parts[3];
@@ -47,7 +43,6 @@ function pickFirstString(obj: JwtPayload, keys: string[]): string | null {
 }
 
 function deepPickConnectionKey(payload: JwtPayload): string | null {
-  // 1) Direct claims (varies by env)
   const direct = pickFirstString(payload, [
     "siteId",
     "metaSiteId",
@@ -56,10 +51,8 @@ function deepPickConnectionKey(payload: JwtPayload): string | null {
     "appInstanceId",
     "aid",
     "sub",
-  ]);
+  ]  );
   if (direct) return direct;
-
-  // 2) Wix OauthNG tokens often store details in payload.data as a JSON string
   const dataStr = payload.data;
   if (typeof dataStr === "string" && dataStr.length > 0) {
     const parsed = tryParseJsonObject(dataStr);
@@ -79,13 +72,6 @@ function deepPickConnectionKey(payload: JwtPayload): string | null {
   return null;
 }
 
-/**
- * Best-effort extraction of a stable per-installation key from the auth header
- * produced by `httpClient.fetchWithAuth()`.
- *
- * We intentionally avoid depending on a single claim name: Wix tokens differ
- * between environments/identities.
- */
 export function getConnectionKeyFromAuthHeader(
   authHeader: string | null,
 ): string | null {

@@ -6,9 +6,7 @@ export type StoredHubSpotConnection = {
   connectionKey: string;
   hubId?: number;
   scopes?: string[];
-  // Deprecated: legacy encrypted token blob (stringified JSON).
   tokenEnc?: string;
-  // New: store tokens directly as text fields in CMS.
   accessToken?: string;
   refreshToken?: string;
   tokenExpiresAtMs?: number;
@@ -33,7 +31,6 @@ function summarizeValue(v: unknown): unknown {
 function summarizeAttempt(attempt: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(attempt)) {
-    // Never include values (even if encrypted) in thrown errors/logs.
     out[k] = summarizeValue(v);
   }
   return out;
@@ -89,7 +86,6 @@ export async function getConnectionByKey(
 export async function getConnectionByHubId(
   hubId: number,
 ): Promise<{ _id: string; data: StoredHubSpotConnection } | null> {
-  // Some CMS schemas store hubId as text. Try both number and string.
   for (const v of [hubId, String(hubId)] as const) {
     const res = await elevatedItems
       .query(collectionId(COLLECTIONS.connections))
@@ -129,11 +125,8 @@ export async function upsertConnection(
     attemptSummary: Record<string, unknown>;
   }> = [];
 
-  // Attempt 1: as-is (best for correctly typed collections)
   attempts.push({ ...base, ...patch });
 
-  // Attempt 1b: if tokenEnc is JSON string, try storing as an object
-  // (some schemas use an Object field instead of Text).
   const patchObj: Record<string, unknown> = { ...patch };
   if (typeof patchObj.tokenEnc === "string") {
     try {
@@ -141,13 +134,10 @@ export async function upsertConnection(
       if (parsed && typeof parsed === "object") {
         patchObj.tokenEnc = parsed;
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
   attempts.push({ ...base, ...patchObj });
 
-  // Attempt 2: coerce hubId/scopes to safer types (for manually-created schemas)
   const patch2: Record<string, unknown> = { ...patch };
   if (typeof patch2.hubId === "number") {
     patch2.hubId = String(patch2.hubId);
@@ -157,7 +147,6 @@ export async function upsertConnection(
   }
   attempts.push({ ...base, ...patch2 });
 
-  // Attempt 3: minimal required fields only (connectivity)
   const minimal: Record<string, unknown> = {
     tokenEnc: (patch as Record<string, unknown>).tokenEnc,
     tokenExpiresAtMs: (patch as Record<string, unknown>).tokenExpiresAtMs,
@@ -181,7 +170,6 @@ export async function upsertConnection(
       return;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // Only retry on WixData internal unknown errors; otherwise fail fast.
       if (!msg.includes("WDE0053")) {
         throw err;
       }
@@ -191,15 +179,9 @@ export async function upsertConnection(
         wixErrorMessage: msg,
         attemptSummary: summarizeAttempt(attempt),
       });
-      // retry next attempt
     }
   }
 
-  // Bubble up enough context to debug typical root causes:
-  // - collection doesn't exist / wrong collection id
-  // - schema mismatch (field types/required fields)
-  // - permissions / environment limitations
-  // Keep it compact and value-free.
   const compact = JSON.stringify(errors).slice(0, 1500);
   throw new Error(
     `WDE0053: Failed to write hubspot_connections after retries. ` +

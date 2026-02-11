@@ -1,4 +1,3 @@
-import { ensureAppCollectionsExist } from "../../storage/ensureCollections";
 import { listMappings, replaceMappings, type FieldMapping, type MappingDirection, type MappingTransform } from "../../storage/mappings";
 import { getConnectionKeyFromAuthHeader } from "../../wix/authConnectionKey";
 
@@ -43,8 +42,6 @@ function validateMappings(input: unknown): FieldMapping[] | null {
       transform: parseTransform(r.transform),
     });
   }
-
-  // No duplicate HubSpot property mapping (unless explicitly allowed later)
   const seen = new Set<string>();
   for (const m of out) {
     if (seen.has(m.hubspotPropertyName)) {
@@ -58,7 +55,6 @@ function validateMappings(input: unknown): FieldMapping[] | null {
 
 export async function GET(req: Request): Promise<Response> {
   try {
-    await ensureAppCollectionsExist();
     const connectionKey = getConnectionKeyFromAuthHeader(req.headers.get("Authorization"));
     if (!connectionKey) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -73,7 +69,6 @@ export async function GET(req: Request): Promise<Response> {
 
 export async function POST(req: Request): Promise<Response> {
   try {
-    await ensureAppCollectionsExist();
     const connectionKey = getConnectionKeyFromAuthHeader(req.headers.get("Authorization"));
     if (!connectionKey) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });

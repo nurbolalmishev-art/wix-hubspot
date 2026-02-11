@@ -3,7 +3,7 @@
   "type": "webhooks",
   "config": {
     "settings": {
-      "targetUrl": "https://<PREVIEW_DOMAIN>.wix-app.run/functions/hubspot-webhook?instanceId=<INSTANCE_ID>",
+      "targetUrl": "https://c9afddd8-c2a0-479b-a9fb-8a77a5095c79.wix-app.run/functions/hubspot-webhook?instanceId=5b330d6b-8c12-4473-816e-d18b1b42fef2",
       "maxConcurrentRequests": 10
     },
     "subscriptions": {

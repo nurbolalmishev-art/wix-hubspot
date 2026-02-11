@@ -99,8 +99,8 @@ export async function hmacSha256(
 }
 
 export async function aesGcmEncrypt(params: {
-  keyBytes: Uint8Array; // 32 bytes
-  iv: Uint8Array; // 12 bytes
+  keyBytes: Uint8Array;
+  iv: Uint8Array;
   plaintextUtf8: string;
 }): Promise<{ ciphertext: Uint8Array; tag: Uint8Array }> {
   const c = assertWebCrypto();
@@ -123,7 +123,7 @@ export async function aesGcmEncrypt(params: {
 }
 
 export async function aesGcmDecrypt(params: {
-  keyBytes: Uint8Array; // 32 bytes
+  keyBytes: Uint8Array;
   iv: Uint8Array;
   ciphertext: Uint8Array;
   tag: Uint8Array;

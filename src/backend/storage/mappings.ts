@@ -59,7 +59,6 @@ export async function replaceMappings(params: {
   connectionKey: string;
   mappings: FieldMapping[];
 }): Promise<void> {
-  // Delete existing
   const existing = await elevatedItems
     .query(collectionId(COLLECTIONS.fieldMappings))
     .eq("connectionKey", params.connectionKey)

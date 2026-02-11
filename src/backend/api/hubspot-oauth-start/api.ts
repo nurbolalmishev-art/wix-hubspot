@@ -6,12 +6,10 @@ import {
 import { createSignedState } from "../../hubspot/state";
 import { getHubSpotStateSigningSecret } from "../../hubspot/stateSigningSecret";
 import { getConnectionKeyFromAuthHeader } from "../../wix/authConnectionKey";
-import { ensureAppCollectionsExist } from "../../storage/ensureCollections";
 import { bytesToHex, randomBytes } from "../../utils/webCrypto";
 
 export async function POST(req: Request): Promise<Response> {
   try {
-    await ensureAppCollectionsExist();
     const connectionKey = getConnectionKeyFromAuthHeader(
       req.headers.get("Authorization"),
     );
