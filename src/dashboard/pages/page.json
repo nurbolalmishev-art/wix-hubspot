@@ -1,0 +1,5 @@
+{
+  "$schema": "https://dev.wix.com/wix-cli/schemas/dashboard-page.json",
+  "id": "91cde239-32fb-47f5-b453-71f53c594c9d",
+  "title": "hubspot-sync"
+}

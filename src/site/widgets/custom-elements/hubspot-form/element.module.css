@@ -1,0 +1,13 @@
+.root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  width: 100%;
+}
+
+.placeholder {
+  padding: 12px;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
