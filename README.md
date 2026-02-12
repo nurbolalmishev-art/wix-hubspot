@@ -108,6 +108,13 @@ In Wix **Secrets Manager**, create the following secrets (IDs must match exactly
 - `hubspot_client_secret`
   - HubSpot app **Client Secret** from your HubSpot Developer portal.
 
+## Wix config
+
+In the project root, update `wix.config.json`:
+
+- Replace the placeholder `appId` with **your own app/site ID** from Wix Dev Center  
+  (this is the ID of the app you installed on the target site, sometimes referred to as `siteId` in docs).
+
 ## HubSpot URLs
 
 Replace the placeholders with your own values:
