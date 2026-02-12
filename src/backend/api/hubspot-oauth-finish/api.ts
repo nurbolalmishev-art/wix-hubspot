@@ -5,7 +5,6 @@ import { storeHubSpotTokens } from "../../hubspot/tokenStore";
 import { getConnectionKeyFromAuthHeader } from "../../wix/authConnectionKey";
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000;
-const BUILD_TAG = "2026-02-10T23:58Z-token-fields-and-webhook-sig";
 
 type FinishBody = {
   code?: string;
@@ -112,7 +111,6 @@ export async function POST(req: Request): Promise<Response> {
           hubspotStatus: err.status,
           details: err.details,
           stage,
-          buildTag: BUILD_TAG,
         },
         { status: 502 },
       );
@@ -132,7 +130,6 @@ export async function POST(req: Request): Promise<Response> {
         code: "oauth_finish_failed",
         stage,
         details: safeMsg(err),
-        buildTag: BUILD_TAG,
       },
       { status: 500 },
     );
